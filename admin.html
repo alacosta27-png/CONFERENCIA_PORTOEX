@@ -187,6 +187,8 @@
     </div>
 
     <div class="actions-row">
+      <button class="btn-import" onclick="window._exportar('xlsx')" style="background:#16a34a;height:38px;padding:8px 16px;font-size:12px;">📊 Exportar Excel</button>
+      <button class="btn-import" onclick="window._exportar('csv')" style="background:#0F766E;height:38px;padding:8px 16px;font-size:12px;">📄 Exportar CSV</button>
       <button class="btn-import secondary" onclick="window._limparTudo()" style="height:38px;padding:8px 16px;font-size:12px;">🗑 Limpar todos os dados</button>
     </div>
   </div>
@@ -246,6 +248,9 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- SheetJS para exportar Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -594,6 +599,220 @@
         toast('Erro: ' + e.message, 'erro');
       }
     });
+  };
+
+  // ── EXPORTAR (Excel ou CSV) ───────────────────────────────────────
+  window._exportar = async function(formato) {
+    try {
+      const snap = await get(veiculosRef);
+      const vs = snap.val() || {};
+      const arr = Object.values(vs);
+
+      if (!arr.length) {
+        toast('Sem dados para exportar.', 'erro');
+        return;
+      }
+
+      // Monta uma linha por nota (estrutura achatada para planilha)
+      const linhas = [];
+      for (const v of arr) {
+        const c = v.conferencia || {};
+        const paletes = c.paleteQtds
+          ? Object.entries(c.paleteQtds).filter(([,q]) => q > 0).map(([k,q]) => `${k}:${q}`).join(' ')
+          : (c.paleteTipo === 'nenhum' ? 'Nenhum' : '');
+        const insumos = c.insumos
+          ? Object.entries(c.insumos).filter(([,q]) => q > 0).map(([k,q]) => `${k}:${q}`).join(' ')
+          : '';
+        const statusVeiculo = v.conferencia ? 'CONFERIDO' : 'PENDENTE';
+
+        // Se tem notas, cria uma linha por nota
+        if (v.notas && v.notas.length) {
+          for (const n of v.notas) {
+            const statusNota = n.status === 'ok' ? 'OK'
+                              : n.status === 'nao_ok' ? 'NÃO OK'
+                              : 'PENDENTE';
+            linhas.push({
+              'Placa': v.placa || '',
+              'Motorista': v.motorista || '',
+              'Tipo Carga': v.tipo_carga || '',
+              'Status Veículo': statusVeiculo,
+              'Conferente': c.conferente || '',
+              'Doca': c.doca || '',
+              'Data/Hora': c.hora || '',
+              'Cliente/Destinatário': n.cliente || '',
+              'NF': n.nf || '',
+              'DI/Cotação': n.diCotacao || '',
+              'OC': n.oc || '',
+              'Valor R$': n.valor || '',
+              'Tipo Linha': n.tipo || '',
+              'Status NF': statusNota,
+              'Valor Real (se divergência)': n.valor_real || '',
+              'Paletes': paletes,
+              'Insumos Utilizados': insumos,
+              'Doc. OK?': c.docOk === true ? 'SIM' : c.docOk === false ? 'NÃO' : '',
+              'Obs. Documentação': c.docObs || '',
+              'Tem Extras?': c.temExtras === true ? 'SIM' : c.temExtras === false ? 'NÃO' : '',
+              'Observação Geral': c.observacao || '',
+              'Descrição Programação': n.descricao || ''
+            });
+          }
+        } else {
+          // Veículo sem notas (caso raro)
+          linhas.push({
+            'Placa': v.placa || '',
+            'Motorista': v.motorista || '',
+            'Tipo Carga': v.tipo_carga || '',
+            'Status Veículo': statusVeiculo,
+            'Conferente': c.conferente || '',
+            'Doca': c.doca || '',
+            'Data/Hora': c.hora || '',
+            'Cliente/Destinatário': '',
+            'NF': '',
+            'DI/Cotação': '',
+            'OC': '',
+            'Valor R$': '',
+            'Tipo Linha': '',
+            'Status NF': '',
+            'Valor Real (se divergência)': '',
+            'Paletes': paletes,
+            'Insumos Utilizados': insumos,
+            'Doc. OK?': c.docOk === true ? 'SIM' : c.docOk === false ? 'NÃO' : '',
+            'Obs. Documentação': c.docObs || '',
+            'Tem Extras?': c.temExtras === true ? 'SIM' : c.temExtras === false ? 'NÃO' : '',
+            'Observação Geral': c.observacao || '',
+            'Descrição Programação': ''
+          });
+        }
+
+        // Adiciona linhas de ITENS EXTRAS (quando houver)
+        if (c.temExtras && Array.isArray(c.extras)) {
+          for (const e of c.extras) {
+            if (!e.desc && !e.nf) continue;
+            linhas.push({
+              'Placa': v.placa || '',
+              'Motorista': v.motorista || '',
+              'Tipo Carga': v.tipo_carga || '',
+              'Status Veículo': statusVeiculo,
+              'Conferente': c.conferente || '',
+              'Doca': c.doca || '',
+              'Data/Hora': c.hora || '',
+              'Cliente/Destinatário': '*** ITEM EXTRA ***',
+              'NF': e.nf || '',
+              'DI/Cotação': '',
+              'OC': '',
+              'Valor R$': '',
+              'Tipo Linha': 'EXTRA',
+              'Status NF': 'EXTRA',
+              'Valor Real (se divergência)': '',
+              'Paletes': paletes,
+              'Insumos Utilizados': insumos,
+              'Doc. OK?': c.docOk === true ? 'SIM' : c.docOk === false ? 'NÃO' : '',
+              'Obs. Documentação': c.docObs || '',
+              'Tem Extras?': 'SIM',
+              'Observação Geral': c.observacao || '',
+              'Descrição Programação': e.desc || ''
+            });
+          }
+        }
+      }
+
+      const dataStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      const horaStr = new Date().toTimeString().slice(0,5).replace(':','');
+      const nomeBase = `portoex_conferencia_${dataStr}_${horaStr}`;
+
+      if (formato === 'xlsx') {
+        // EXCEL (XLSX)
+        if (typeof XLSX === 'undefined') {
+          toast('Biblioteca Excel não carregou. Recarregue a página.', 'erro');
+          return;
+        }
+        const ws = XLSX.utils.json_to_sheet(linhas);
+
+        // Largura das colunas
+        ws['!cols'] = [
+          { wch: 20 }, // Placa
+          { wch: 22 }, // Motorista
+          { wch: 12 }, // Tipo Carga
+          { wch: 15 }, // Status Veículo
+          { wch: 18 }, // Conferente
+          { wch: 10 }, // Doca
+          { wch: 18 }, // Data/Hora
+          { wch: 35 }, // Cliente
+          { wch: 14 }, // NF
+          { wch: 30 }, // DI
+          { wch: 14 }, // OC
+          { wch: 12 }, // Valor
+          { wch: 12 }, // Tipo Linha
+          { wch: 12 }, // Status NF
+          { wch: 22 }, // Valor Real
+          { wch: 25 }, // Paletes
+          { wch: 30 }, // Insumos
+          { wch: 10 }, // Doc OK
+          { wch: 30 }, // Obs Doc
+          { wch: 10 }, // Tem Extras
+          { wch: 35 }, // Obs Geral
+          { wch: 40 }  // Descrição
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Conferências');
+
+        // Aba resumo
+        const resumo = [
+          { 'Indicador': 'Total de Veículos', 'Valor': arr.length },
+          { 'Indicador': 'Conferidos', 'Valor': arr.filter(v => v.conferencia).length },
+          { 'Indicador': 'Pendentes', 'Valor': arr.filter(v => !v.conferencia).length },
+          { 'Indicador': 'Entrada (Coleta)', 'Valor': arr.filter(v => v.tipo_carga === 'ENTRADA').length },
+          { 'Indicador': 'Saída (Embarque)', 'Valor': arr.filter(v => v.tipo_carga === 'SAIDA').length },
+          { 'Indicador': 'Mista', 'Valor': arr.filter(v => v.tipo_carga === 'MISTA').length },
+          { 'Indicador': 'Total de NFs', 'Valor': linhas.filter(l => l['Status NF'] !== 'EXTRA').length },
+          { 'Indicador': 'NFs OK', 'Valor': linhas.filter(l => l['Status NF'] === 'OK').length },
+          { 'Indicador': 'NFs Não OK (divergência)', 'Valor': linhas.filter(l => l['Status NF'] === 'NÃO OK').length },
+          { 'Indicador': 'Itens Extras', 'Valor': linhas.filter(l => l['Status NF'] === 'EXTRA').length },
+          { 'Indicador': 'Exportado em', 'Valor': new Date().toLocaleString('pt-BR') }
+        ];
+        const wsResumo = XLSX.utils.json_to_sheet(resumo);
+        wsResumo['!cols'] = [{ wch: 28 }, { wch: 20 }];
+        XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
+
+        XLSX.writeFile(wb, nomeBase + '.xlsx');
+        addLog('ok', `📊 Exportado Excel: ${linhas.length} linhas de ${arr.length} veículos.`);
+        toast('✅ Excel exportado!', 'ok');
+
+      } else {
+        // CSV (Google Sheets)
+        const headers = Object.keys(linhas[0]);
+        const csvRows = [headers.join(',')];
+        for (const l of linhas) {
+          const row = headers.map(h => {
+            let v = String(l[h] ?? '');
+            v = v.replace(/"/g, '""');
+            if (/[",\n\r;]/.test(v)) v = '"' + v + '"';
+            return v;
+          });
+          csvRows.push(row.join(','));
+        }
+        // BOM para Excel ler acentos corretamente
+        const csvContent = '\uFEFF' + csvRows.join('\r\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nomeBase + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+        addLog('ok', `📄 Exportado CSV: ${linhas.length} linhas de ${arr.length} veículos.`);
+        toast('✅ CSV exportado!', 'ok');
+      }
+    } catch (e) {
+      console.error(e);
+      toast('Erro ao exportar: ' + e.message, 'erro');
+      addLog('erro', '❌ Erro ao exportar: ' + e.message);
+    }
   };
 
   // ── AUTO SYNC ─────────────────────────────────────────────────────
