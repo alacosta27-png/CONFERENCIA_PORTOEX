@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portoex · Sistema de Conferência</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --laranja: #F47920;
+    --azul: #003F7D;
+    --azul-escuro: #002B5C;
+    --bg: #F5F7FA;
+    --cinza-texto: #6B7280;
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, var(--azul) 0%, var(--azul-escuro) 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container { max-width: 900px; width: 100%; }
+  .brand { text-align: center; margin-bottom: 40px; color: #fff; }
+  .brand .porto { font-weight: 800; font-size: 48px; letter-spacing: -1px; }
+  .brand .porto span { color: var(--laranja); }
+  .brand .tag { font-size: 12px; opacity: 0.7; text-transform: uppercase; letter-spacing: 2px; margin-top: 6px; font-weight: 600; }
+  .brand h1 { font-size: 20px; font-weight: 600; margin-top: 20px; opacity: 0.95; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  @media(max-width:750px){ .cards{grid-template-columns:1fr} }
+  .card { background: #fff; border-radius: 20px; padding: 28px 22px; text-align: center; text-decoration: none; color: inherit; transition: all 0.2s; display: block; }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+  .card .icon { font-size: 48px; margin-bottom: 12px; }
+  .card h3 { font-size: 17px; color: var(--azul); font-weight: 800; margin-bottom: 8px; }
+  .card p { font-size: 13px; color: var(--cinza-texto); line-height: 1.5; }
+  .card .btn { margin-top: 16px; background: var(--laranja); color: #fff; padding: 10px 22px; border-radius: 10px; display: inline-block; font-size: 13px; font-weight: 700; }
+  .card.admin .btn { background: var(--azul); }
+  .footer { text-align: center; margin-top: 40px; color: rgba(255,255,255,0.5); font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="brand">
+    <div class="porto">PORTO<span>EX</span></div>
+    <div class="tag">Transportando Soluções</div>
+    <h1>Sistema de Conferência de Cargas</h1>
+  </div>
+  <div class="cards">
+    <a href="conferencia.html" class="card">
+      <div class="icon">👷</div>
+      <h3>Conferentes</h3>
+      <p>Conferir mercadorias, notas fiscais, insumos e paletes dos veículos.</p>
+      <div class="btn">Iniciar Conferência →</div>
+    </a>
+    <a href="dashboard.html" class="card">
+      <div class="icon">📊</div>
+      <h3>Dashboard</h3>
+      <p>Acompanhe todas as conferências em tempo real, com estatísticas e divergências.</p>
+      <div class="btn">Abrir Dashboard →</div>
+    </a>
+    <a href="admin.html" class="card admin">
+      <div class="icon">⚙️</div>
+      <h3>Admin</h3>
+      <p>Área restrita para importar programação da planilha e gerenciar o sistema.</p>
+      <div class="btn">Acessar (senha) →</div>
+    </a>
+  </div>
+  <div class="footer">PortoEx · Itajaí SC · 2026</div>
+</div>
+</body>
+</html>
