@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Portoex Conferência</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --laranja: #F47920;
+    --laranja-escuro: #D8651A;
+    --azul: #003F7D;
+    --azul-escuro: #002B5C;
+    --bg: #F5F7FA;
+    --branco: #FFFFFF;
+    --cinza-borda: #E4E8EE;
+    --cinza-texto: #6B7280;
+    --texto: #1F2937;
+    --verde: #10B981;
+    --vermelho: #EF4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--texto); min-height: 100vh; }
+
+  header { background: var(--branco); border-bottom: 3px solid var(--laranja); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-logo { display: flex; flex-direction: column; line-height: 1; }
+  .brand-logo .porto { font-weight: 800; font-size: 26px; color: var(--azul); letter-spacing: -0.5px; }
+  .brand-logo .porto span { color: var(--laranja); }
+  .brand-tag { font-size: 10px; color: var(--cinza-texto); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; font-weight: 600; }
+  .sep { width: 1px; height: 30px; background: var(--cinza-borda); }
+  .app-name { font-size: 14px; font-weight: 600; color: var(--azul); }
+  .app-name strong { color: var(--laranja); }
+  .header-right { display: flex; gap: 10px; align-items: center; }
+  .db-status { font-size: 11px; padding: 5px 11px; border-radius: 999px; border: 1px solid; font-weight: 600; }
+  .db-ok { color: var(--verde); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+  .db-err { color: var(--vermelho); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); }
+  .db-connecting { color: var(--laranja); border-color: rgba(244,121,32,0.3); background: rgba(244,121,32,0.08); }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+
+  .login-overlay { position: fixed; inset: 0; background: rgba(0,63,125,0.95); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-box { background: var(--branco); border-radius: 20px; padding: 40px 32px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .login-box .lock { font-size: 44px; margin-bottom: 12px; }
+  .login-box h2 { font-size: 22px; color: var(--azul); margin-bottom: 6px; }
+  .login-box p { font-size: 13px; color: var(--cinza-texto); margin-bottom: 24px; }
+  .login-box input { width: 100%; padding: 14px 16px; border: 2px solid var(--cinza-borda); border-radius: 12px; font-size: 18px; text-align: center; letter-spacing: 8px; outline: none; font-family: 'Inter', sans-serif; margin-bottom: 12px; }
+  .login-box input:focus { border-color: var(--laranja); }
+  .login-box .erro { color: var(--vermelho); font-size: 13px; min-height: 18px; margin-bottom: 10px; }
+  .login-box button { width: 100%; background: var(--laranja); color: #fff; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.2s; font-family: 'Inter', sans-serif; }
+  .login-box button:hover { background: var(--laranja-escuro); }
+
+  .card { background: var(--branco); border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid var(--cinza-borda); }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--azul); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+  .import-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+  @media(max-width:700px){ .import-row{grid-template-columns:1fr} }
+
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--texto); margin-bottom: 6px; }
+  .field input { width: 100%; padding: 12px 14px; border: 1px solid var(--cinza-borda); border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 14px; background: var(--bg); outline: none; transition: border-color 0.2s; }
+  .field input:focus { border-color: var(--laranja); background: #fff; }
+  .field .help { font-size: 11px; color: var(--cinza-texto); margin-top: 4px; }
+
+  .btn-import { background: var(--laranja); color: #fff; border: none; padding: 12px 26px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 8px; white-space: nowrap; height: 46px; transition: background 0.2s; }
+  .btn-import:hover { background: var(--laranja-escuro); }
+  .btn-import:disabled { background: #ccc; cursor: not-allowed; }
+  .btn-import.secondary { background: #6B7280; }
+  .btn-import.secondary:hover { background: #4B5563; }
+
+  .sync-control { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; background: var(--bg); padding: 14px 16px; border-radius: 12px; margin-top: 16px; }
+  @media(max-width:600px){ .sync-control{grid-template-columns:1fr; } }
+  .sync-control .info { font-size: 13px; color: var(--texto); }
+  .sync-control .info strong { color: var(--laranja); }
+  .sync-control select { padding: 8px 12px; border: 1px solid var(--cinza-borda); border-radius: 8px; font-size: 13px; background: #fff; font-family: 'Inter', sans-serif; }
+  .sync-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .switch { position: relative; width: 46px; height: 26px; background: #ccc; border-radius: 999px; cursor: pointer; transition: background 0.2s; }
+  .switch.on { background: var(--verde); }
+  .switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: left 0.2s; }
+  .switch.on::after { left: 23px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  @media(max-width:700px){ .stats-row{grid-template-columns:repeat(2,1fr)} }
+  .stat-box { background: var(--branco); padding: 18px; border-radius: 14px; border: 1px solid var(--cinza-borda); text-align: center; }
+  .stat-box.destaque { background: linear-gradient(135deg, var(--azul) 0%, var(--azul-escuro) 100%); color: #fff; border: none; }
+  .stat-box.laranja { background: linear-gradient(135deg, var(--laranja) 0%, var(--laranja-escuro) 100%); color: #fff; border: none; }
+  .stat-value { font-size: 34px; font-weight: 800; line-height: 1; }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; opacity: 0.75; font-weight: 600; }
+
+  .veiculos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .veiculo-card { background: var(--branco); border: 1px solid var(--cinza-borda); border-radius: 14px; padding: 16px; transition: all 0.2s; }
+  .veiculo-card:hover { border-color: var(--laranja); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+  .placa { font-size: 16px; font-weight: 800; color: var(--azul); letter-spacing: 1px; font-family: 'Inter', monospace; }
+  .veiculo-info { font-size: 12px; color: var(--cinza-texto); margin-top: 4px; }
+  .veiculo-meta { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .tag { padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+  .tag-notas { background: rgba(0,63,125,0.1); color: var(--azul); }
+  .tag-conf { background: rgba(16,185,129,0.1); color: var(--verde); }
+  .tag-pend { background: rgba(244,121,32,0.1); color: var(--laranja); }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); padding: 12px 24px; border-radius: 10px; font-weight: 600; font-size: 13px; transition: transform 0.3s; z-index: 999; background: var(--azul); color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.2); pointer-events: none; max-width: 90%; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.ok { background: var(--verde); }
+  .toast.erro { background: var(--vermelho); }
+
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .link-box { background: var(--bg); padding: 14px 16px; border-radius: 10px; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .link-box code { background: #fff; padding: 6px 10px; border-radius: 6px; font-size: 12px; color: var(--azul); font-family: monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 150px; }
+  .btn-copy { background: var(--azul); color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 600; font-family: 'Inter', sans-serif; }
+
+  .log-entry { padding: 10px 14px; border-left: 3px solid var(--cinza-borda); font-size: 13px; margin-bottom: 8px; background: var(--bg); border-radius: 0 8px 8px 0; word-wrap: break-word; }
+  .log-entry.ok { border-left-color: var(--verde); }
+  .log-entry.erro { border-left-color: var(--vermelho); }
+  .log-entry.info { border-left-color: var(--azul); }
+  .log-time { font-size: 11px; color: var(--cinza-texto); margin-right: 8px; font-weight: 600; }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--cinza-texto); }
+  .empty-icon { font-size: 42px; margin-bottom: 10px; }
+
+  .actions-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+  .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 900; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box { background: #fff; border-radius: 16px; padding: 28px; max-width: 400px; width: 100%; text-align: center; }
+  .confirm-box h3 { color: var(--vermelho); font-size: 18px; margin-bottom: 8px; }
+  .confirm-box p { color: var(--cinza-texto); font-size: 14px; margin-bottom: 20px; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-btns button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; font-family: 'Inter', sans-serif; }
+  .btn-cancel { background: var(--bg); color: var(--texto); }
+  .btn-ok { background: var(--vermelho); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="lock">🔐</div>
+    <h2>Área Administrativa</h2>
+    <p>Digite a senha para continuar</p>
+    <input type="password" id="senhaInput" placeholder="••••••" maxlength="10" autofocus />
+    <div class="erro" id="senhaErro"></div>
+    <button onclick="window._login()">Entrar</button>
+  </div>
+</div>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo">
+      <div class="porto">PORTO<span>EX</span></div>
+      <div class="brand-tag">Transportando Soluções</div>
+    </div>
+    <div class="sep"></div>
+    <div class="app-name">Sistema de <strong>Conferência</strong> · Admin</div>
+  </div>
+  <div class="header-right">
+    <div class="db-status db-connecting" id="dbStatus">⏳ Conectando…</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">📥 Importar Programação</div>
+    <div class="import-row">
+      <div class="field">
+        <label>URL da Google Sheet (link de edição OU link CSV)</label>
+        <input type="text" id="sheetUrl" value="https://docs.google.com/spreadsheets/d/1870eabvSd55pphaupaGAW_r4q5LARajzpKSqYeLs1Cs/edit?gid=0" />
+        <div class="help">💡 Pode colar o link normal da planilha. A planilha precisa estar <strong>pública</strong> (Compartilhar → Qualquer pessoa com o link pode ver).</div>
+      </div>
+      <button class="btn-import" id="btnImport" onclick="window._importar()">
+        <span id="btnImportText">📥 Importar agora</span>
+      </button>
+    </div>
+
+    <div class="sync-control">
+      <div class="info">🔄 Sincronização automática: <strong id="syncStatus">Desativada</strong></div>
+      <select id="syncInterval">
+        <option value="60000">A cada 1 minuto</option>
+        <option value="300000" selected>A cada 5 minutos</option>
+        <option value="600000">A cada 10 minutos</option>
+        <option value="1800000">A cada 30 minutos</option>
+      </select>
+      <div class="sync-toggle">
+        <div class="switch" id="syncSwitch" onclick="window._toggleSync()"></div>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn-import secondary" onclick="window._limparTudo()" style="height:38px;padding:8px 16px;font-size:12px;">🗑 Limpar todos os dados</button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box destaque"><div class="stat-value" id="statVeiculos">–</div><div class="stat-label">🚛 Veículos</div></div>
+    <div class="stat-box laranja"><div class="stat-value" id="statNotas">–</div><div class="stat-label">📄 Notas Fiscais</div></div>
+    <div class="stat-box"><div class="stat-value" id="statConferidos" style="color: var(--verde);">–</div><div class="stat-label">✅ Conferidos</div></div>
+    <div class="stat-box"><div class="stat-value" id="statPendentes" style="color: var(--laranja);">–</div><div class="stat-label">⏱ Pendentes</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔗 Links dos Apps</div>
+    <div class="link-box">
+      <span>👷 <strong>App Conferentes:</strong></span>
+      <code id="linkConf">—</code>
+      <button class="btn-copy" onclick="window._copiar('linkConf')">📋 Copiar</button>
+    </div>
+    <div class="link-box">
+      <span>📊 <strong>Dashboard ao vivo:</strong></span>
+      <code id="linkDash">—</code>
+      <button class="btn-copy" onclick="window._copiar('linkDash')">📋 Copiar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚛 Veículos na Programação</div>
+    <div id="veiculosList">
+      <div class="empty">
+        <div class="empty-icon">📭</div>
+        Nenhum veículo importado ainda. Clique em "Importar agora" para começar.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📝 Log de Atividades</div>
+    <div id="logList">
+      <div class="empty">
+        <div class="empty-icon">📋</div>
+        Nenhuma atividade ainda.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>⚠️ Atenção!</h3>
+    <p id="confirmMsg">Tem certeza?</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="window._confirmClose()">Cancelar</button>
+      <button class="btn-ok" onclick="window._confirmOk()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCu-cF9UzphJyd4p6sOksvRFi86VZl2zTM",
+    authDomain: "camisetas-17b12.firebaseapp.com",
+    projectId: "camisetas-17b12",
+    storageBucket: "camisetas-17b12.firebasestorage.app",
+    messagingSenderId: "692232493547",
+    appId: "1:692232493547:web:692bafc9c6adcbb5d6e1ae",
+    databaseURL: "https://camisetas-17b12-default-rtdb.firebaseio.com"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const statusEl = document.getElementById('dbStatus');
+
+  const veiculosRef = ref(db, 'conferencia/veiculos');
+  const logRef = ref(db, 'conferencia/log');
+  const configRef = ref(db, 'conferencia/config');
+
+  // ── LOGIN ─────────────────────────────────────────────────────────
+  window._login = function() {
+    const v = document.getElementById('senhaInput').value;
+    if (v === '185166') {
+      sessionStorage.setItem('admin_auth', '1');
+      document.getElementById('loginOverlay').style.display = 'none';
+      inicializar();
+    } else {
+      document.getElementById('senhaErro').textContent = '❌ Senha incorreta';
+      document.getElementById('senhaInput').value = '';
+      document.getElementById('senhaInput').focus();
+    }
+  };
+  document.getElementById('senhaInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window._login();
+  });
+  if (sessionStorage.getItem('admin_auth') === '1') {
+    document.getElementById('loginOverlay').style.display = 'none';
+    inicializar();
+  }
+
+  // ── LINKS ─────────────────────────────────────────────────────────
+  const baseUrl = location.href.split('/').slice(0,-1).join('/') + '/';
+  document.getElementById('linkConf').textContent = baseUrl + 'conferencia.html';
+  document.getElementById('linkDash').textContent = baseUrl + 'dashboard.html';
+
+  window._copiar = function(id) {
+    const txt = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(txt).then(() => toast('Link copiado!', 'ok'));
+  };
+
+  // ── CONFIRM ───────────────────────────────────────────────────────
+  let _confirmCallback = null;
+  function askConfirm(msg, callback) {
+    document.getElementById('confirmMsg').textContent = msg;
+    _confirmCallback = callback;
+    document.getElementById('confirmOverlay').classList.add('open');
+  }
+  window._confirmClose = function() {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    _confirmCallback = null;
+  };
+  window._confirmOk = function() {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    if (_confirmCallback) _confirmCallback();
+    _confirmCallback = null;
+  };
+
+  // ── SANITIZE KEY PARA FIREBASE ────────────────────────────────────
+  // Firebase não aceita: . # $ / [ ]
+  function sanitizarChave(s) {
+    return String(s || '')
+      .replace(/[.\#\$\/\[\]]/g, '_')   // substitui caracteres proibidos
+      .replace(/\s+/g, '_')              // espaços viram _
+      .replace(/_{2,}/g, '_')            // múltiplos _ viram um só
+      .replace(/^_|_$/g, '')             // remove _ no início/fim
+      .toUpperCase()
+      .substring(0, 60);                 // limita tamanho
+  }
+
+  // ── VALIDA SE É PLACA DE VERDADE ──────────────────────────────────
+  function ehPlacaValida(s) {
+    if (!s) return false;
+    s = s.trim();
+    if (s.length < 6 || s.length > 50) return false;
+
+    // Rejeita se tem HTML/JS/CSS
+    if (/[<>{}()=;]/.test(s)) return false;
+    if (/function|var |const |document|window|\.then|null\?/.test(s)) return false;
+
+    // Placa tem que ter letras E números
+    if (!/[A-Z]/i.test(s) || !/\d/.test(s)) return false;
+
+    // Formato mercosul/antigo: 3 letras + 4 caracteres (ex: ABC1234 ou ABC1D23)
+    // Aceita também com barra: AJQ3G51 / NVR6H65
+    const partes = s.split(/[\/\s-]+/).filter(p => p.trim());
+    if (partes.length === 0) return false;
+
+    // Cada parte precisa parecer placa
+    for (const p of partes) {
+      const limpo = p.replace(/[^A-Z0-9]/gi, '');
+      if (limpo.length < 6 || limpo.length > 8) return false;
+      if (!/^[A-Z]{2,4}\d?[A-Z0-9]{2,5}$/i.test(limpo)) return false;
+    }
+    return true;
+  }
+
+  // ── PARSER CSV ────────────────────────────────────────────────────
+  function parseCSV(text) {
+    const rows = [];
+    let cur = '', row = [], inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (c === '"' && text[i+1] === '"') { cur += '"'; i++; continue; }
+      if (c === '"') { inQuotes = !inQuotes; continue; }
+      if (c === ',' && !inQuotes) { row.push(cur); cur = ''; continue; }
+      if ((c === '\n' || c === '\r') && !inQuotes) {
+        if (c === '\r' && text[i+1] === '\n') i++;
+        row.push(cur); cur = '';
+        if (row.length > 1 || row[0]) rows.push(row);
+        row = [];
+        continue;
+      }
+      cur += c;
+    }
+    if (cur || row.length) { row.push(cur); rows.push(row); }
+    return rows;
+  }
+
+  // ── CONVERTE LINK DE EDIÇÃO EM LINK CSV ───────────────────────────
+  function prepararUrlCSV(url) {
+    url = url.trim();
+    // Se já é link de export CSV, retorna
+    if (url.includes('/export?format=csv')) return url;
+    // Se é link de edição /edit, converte
+    const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+    if (!match) throw new Error('URL do Google Sheets inválida.');
+    const id = match[1];
+    // Pega o gid se tiver
+    const gidMatch = url.match(/[#&?]gid=(\d+)/);
+    const gid = gidMatch ? gidMatch[1] : '0';
+    return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+  }
+
+  // ── IMPORTAR ──────────────────────────────────────────────────────
+  window._importar = async function() {
+    const urlRaw = document.getElementById('sheetUrl').value.trim();
+    if (!urlRaw) { toast('Cole a URL da planilha.', 'erro'); return; }
+
+    const btn = document.getElementById('btnImport');
+    btn.disabled = true;
+    document.getElementById('btnImportText').innerHTML = '<span class="spinner"></span> Importando…';
+
+    try {
+      addLog('info', '🔄 Iniciando importação…');
+
+      let csvUrl;
+      try {
+        csvUrl = prepararUrlCSV(urlRaw);
+      } catch (e) {
+        throw new Error('URL inválida. Cole o link da planilha Google Sheets.');
+      }
+
+      // Tenta direto primeiro, se falhar usa proxy
+      let text = '';
+      let fetchOk = false;
+
+      try {
+        const res = await fetch(csvUrl);
+        if (res.ok) {
+          text = await res.text();
+          // Verifica se veio CSV de verdade (não HTML de erro)
+          if (!text.includes('<!DOCTYPE') && !text.includes('<html')) {
+            fetchOk = true;
+          }
+        }
+      } catch (e) { /* tenta proxy */ }
+
+      if (!fetchOk) {
+        addLog('info', '🔄 Tentando via proxy CORS…');
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(csvUrl);
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error(`Falha ao baixar a planilha (HTTP ${res.status}). Verifique se ela está pública.`);
+        text = await res.text();
+      }
+
+      if (!text || text.includes('<!DOCTYPE') || text.includes('<html')) {
+        throw new Error('A planilha não está pública. Vá em Compartilhar → "Qualquer pessoa com o link pode ver".');
+      }
+
+      const rows = parseCSV(text);
+      addLog('info', `📄 ${rows.length} linhas lidas. Processando…`);
+
+      // Estrutura esperada baseada na planilha original:
+      // [0]=Coleta/Entrega/descrição  [1]=Motorista  [2]=Placa  [6]=Valor
+      // [7]=Destinatário  [12]=NF  [13]=DI/Cotação  [17]=OC
+      const veiculos = {};
+      let ignoradas = 0;
+
+      // Detecta ENTRADA (mercadoria chegando) vs SAIDA (mercadoria saindo)
+      function detectarTipo(desc) {
+        const d = (desc || '').toLowerCase();
+        if (/\b(coleta|descarga|devolu[çc][ãa]o|recebimento|recebe)\b/.test(d)) return 'ENTRADA';
+        if (/\b(embarque|emabrque|entrega|expedi[çc][ãa]o|despacho)\b/.test(d)) return 'SAIDA';
+        return null;
+      }
+
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || r.length < 3) continue;
+
+        const placaBruta = (r[2] || '').trim();
+        if (!ehPlacaValida(placaBruta)) {
+          if (placaBruta) ignoradas++;
+          continue;
+        }
+
+        const chavePlaca = sanitizarChave(placaBruta);
+        if (!chavePlaca) { ignoradas++; continue; }
+
+        const motorista = (r[1] || '').trim();
+        const descricao = (r[0] || '').trim();
+        const destinatario = (r[7] || '').trim();
+        const nf = (r[12] || '').trim();
+        const diCotacao = (r[13] || '').trim();
+        const valor = (r[6] || '').trim();
+        const oc = (r[17] || '').trim();
+
+        const tipoLinha = detectarTipo(descricao);
+
+        if (!veiculos[chavePlaca]) {
+          veiculos[chavePlaca] = {
+            placa: placaBruta,
+            chave: chavePlaca,
+            motorista: motorista || '—',
+            tipos: {},
+            notas: [],
+            ts_import: Date.now()
+          };
+        }
+
+        if (tipoLinha) veiculos[chavePlaca].tipos[tipoLinha] = true;
+
+        // Só adiciona nota se tiver pelo menos UM: NF, DI/Cotação ou OC (+destinatário)
+        const temIdentificacao = !!(nf || diCotacao || oc);
+        if (temIdentificacao && destinatario) {
+          const desc = descricao.toLowerCase();
+          if (desc.includes('veículos -') || desc.includes('veiculos -')) continue;
+
+          // Referência principal (prioridade: NF > DI/Cotação > OC)
+          let referencia = '', refTipo = '';
+          if (nf) { referencia = nf; refTipo = 'NF'; }
+          else if (diCotacao) { referencia = diCotacao.substring(0, 80); refTipo = 'DI/Cotação'; }
+          else if (oc) { referencia = oc; refTipo = 'OC'; }
+
+          veiculos[chavePlaca].notas.push({
+            id: 'n' + i,
+            cliente: destinatario.substring(0, 200),
+            nf: nf.substring(0, 60),
+            diCotacao: diCotacao.substring(0, 300),
+            oc: oc.substring(0, 60),
+            referencia: referencia,
+            refTipo: refTipo,
+            valor: valor.substring(0, 30),
+            descricao: descricao.substring(0, 300),
+            tipo: tipoLinha || '',
+            status: 'pendente',
+            valor_real: '',
+            observacao: ''
+          });
+        }
+      }
+
+      // FILTRA: só mantém veículos com pelo menos uma nota válida
+      for (const chave in veiculos) {
+        if (!veiculos[chave].notas.length) {
+          delete veiculos[chave];
+          ignoradas++;
+        } else {
+          const tiposArr = Object.keys(veiculos[chave].tipos);
+          veiculos[chave].tipo_carga = tiposArr.length === 2 ? 'MISTA' : (tiposArr[0] || 'OUTROS');
+          delete veiculos[chave].tipos;
+        }
+      }
+
+      const total = Object.keys(veiculos).length;
+      const totalNotas = Object.values(veiculos).reduce((s, v) => s + v.notas.length, 0);
+
+      if (total === 0) {
+        throw new Error(`Nenhum veículo válido encontrado. Linhas precisam ter placa + cliente + NF/DI/Cotação/OC.`);
+      }
+
+      // Preservar conferências já feitas
+      const snap = await get(veiculosRef);
+      const atuais = snap.val() || {};
+
+      for (const chave in veiculos) {
+        if (atuais[chave]) {
+          // Preserva a conferência inteira se já existir
+          if (atuais[chave].conferencia) {
+            veiculos[chave].conferencia = atuais[chave].conferencia;
+          }
+          // Preserva o status das notas (ok/nao_ok + valor_real)
+          if (Array.isArray(atuais[chave].notas)) {
+            veiculos[chave].notas = veiculos[chave].notas.map(novaNota => {
+              const antiga = atuais[chave].notas.find(n =>
+                n.nf === novaNota.nf && n.cliente === novaNota.cliente
+              );
+              if (antiga) {
+                return { ...novaNota, status: antiga.status || 'pendente', valor_real: antiga.valor_real || '', observacao: antiga.observacao || '' };
+              }
+              return novaNota;
+            });
+          }
+        }
+      }
+
+      await set(veiculosRef, veiculos);
+      addLog('ok', `✅ Importados ${total} veículos e ${totalNotas} notas. ${ignoradas ? ignoradas + ' linhas ignoradas.' : ''}`);
+      toast(`✅ ${total} veículos importados!`, 'ok');
+
+      await set(ref(db, 'conferencia/ultima_importacao'), Date.now());
+
+    } catch (e) {
+      console.error(e);
+      addLog('erro', '❌ ' + e.message);
+      toast('Erro: ' + e.message, 'erro');
+    }
+
+    btn.disabled = false;
+    document.getElementById('btnImportText').textContent = '📥 Importar agora';
+  };
+
+  // ── LIMPAR TUDO ───────────────────────────────────────────────────
+  window._limparTudo = function() {
+    askConfirm('Isso vai apagar TODOS os veículos e conferências. Não pode ser desfeito.', async () => {
+      try {
+        await remove(veiculosRef);
+        await remove(logRef);
+        addLog('info', '🗑 Todos os dados foram limpos.');
+        toast('✅ Dados limpos!', 'ok');
+      } catch (e) {
+        toast('Erro: ' + e.message, 'erro');
+      }
+    });
+  };
+
+  // ── AUTO SYNC ─────────────────────────────────────────────────────
+  let syncTimer = null;
+  let syncOn = false;
+
+  window._toggleSync = async function() {
+    syncOn = !syncOn;
+    const sw = document.getElementById('syncSwitch');
+    sw.classList.toggle('on', syncOn);
+    document.getElementById('syncStatus').textContent = syncOn ? 'Ativa ✓' : 'Desativada';
+
+    if (syncOn) {
+      const interval = parseInt(document.getElementById('syncInterval').value);
+      syncTimer = setInterval(() => window._importar(), interval);
+      addLog('info', `⏰ Sincronização automática ATIVADA (${interval/60000} min).`);
+      await set(configRef, { autoSync: true, interval });
+    } else {
+      if (syncTimer) clearInterval(syncTimer);
+      syncTimer = null;
+      addLog('info', '⏸️ Sincronização automática desativada.');
+      await set(configRef, { autoSync: false });
+    }
+  };
+
+  document.getElementById('syncInterval').addEventListener('change', () => {
+    if (syncOn) { window._toggleSync(); window._toggleSync(); }
+  });
+
+  // ── LOG ───────────────────────────────────────────────────────────
+  async function addLog(tipo, msg) {
+    try {
+      const entry = { tipo, msg, ts: Date.now(), hora: new Date().toLocaleTimeString('pt-BR') };
+      const snap = await get(logRef);
+      const log = Array.isArray(snap.val()) ? snap.val() : [];
+      log.unshift(entry);
+      if (log.length > 30) log.length = 30;
+      await set(logRef, log);
+    } catch (e) { console.warn('log:', e); }
+  }
+
+  function renderLog(log) {
+    const div = document.getElementById('logList');
+    if (!log || !log.length) {
+      div.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Nenhuma atividade ainda.</div>';
+      return;
+    }
+    div.innerHTML = log.map(e =>
+      `<div class="log-entry ${e.tipo}"><span class="log-time">${e.hora}</span>${escapeHtml(e.msg)}</div>`
+    ).join('');
+  }
+
+  // ── RENDER ────────────────────────────────────────────────────────
+  function renderVeiculos(vs) {
+    const div = document.getElementById('veiculosList');
+    if (!vs || !Object.keys(vs).length) {
+      div.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Nenhum veículo importado ainda.</div>';
+      return;
+    }
+    const arr = Object.values(vs).sort((a,b) => (a.placa||'').localeCompare(b.placa||''));
+    div.innerHTML = `<div class="veiculos-grid">${
+      arr.map(v => {
+        const totalN = v.notas?.length || 0;
+        const conf = v.notas?.filter(n => n.status === 'ok' || n.status === 'nao_ok').length || 0;
+        const pend = totalN - conf;
+        const confDone = v.conferencia ? '✅ Conferido' : '';
+        const tipoBadge = v.tipo_carga === 'ENTRADA' ? '<span class="tag" style="background:rgba(16,185,129,0.15);color:var(--verde);">📥 ENTRADA</span>'
+                        : v.tipo_carga === 'SAIDA' ? '<span class="tag" style="background:rgba(244,121,32,0.15);color:var(--laranja);">📤 SAÍDA</span>'
+                        : v.tipo_carga === 'MISTA' ? '<span class="tag" style="background:rgba(139,92,246,0.15);color:#7C3AED;">🔄 MISTA</span>'
+                        : '<span class="tag" style="background:#eee;color:#666;">OUTROS</span>';
+        return `<div class="veiculo-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px;">
+            <div class="placa">🚛 ${escapeHtml(v.placa)}</div>
+            ${tipoBadge}
+          </div>
+          <div class="veiculo-info">Motorista: ${escapeHtml(v.motorista || '—')}</div>
+          <div class="veiculo-meta">
+            <span class="tag tag-notas">${totalN} NFs</span>
+            ${conf ? `<span class="tag tag-conf">${conf} conferidas</span>` : ''}
+            ${pend ? `<span class="tag tag-pend">${pend} pendentes</span>` : ''}
+          </div>
+          ${confDone ? `<div style="margin-top:8px;font-size:11px;color:var(--verde);font-weight:600;">${confDone} por ${escapeHtml(v.conferencia.conferente || '—')}</div>` : ''}
+        </div>`;
+      }).join('')
+    }</div>`;
+  }
+
+  function renderStats(vs) {
+    const arr = vs ? Object.values(vs) : [];
+    const totalNotas = arr.reduce((s,v) => s + (v.notas?.length || 0), 0);
+    const confNotas = arr.reduce((s,v) => s + (v.notas?.filter(n => n.status === 'ok' || n.status === 'nao_ok').length || 0), 0);
+    document.getElementById('statVeiculos').textContent = arr.length;
+    document.getElementById('statNotas').textContent = totalNotas;
+    document.getElementById('statConferidos').textContent = confNotas;
+    document.getElementById('statPendentes').textContent = totalNotas - confNotas;
+  }
+
+  function toast(msg, tipo = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + tipo;
+    setTimeout(() => { t.className = 'toast ' + tipo; }, 4000);
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function inicializar() {
+    onValue(veiculosRef, snap => {
+      statusEl.textContent = '✅ Conectado';
+      statusEl.className = 'db-status db-ok';
+      const vs = snap.val();
+      renderVeiculos(vs);
+      renderStats(vs);
+    }, err => {
+      statusEl.textContent = '❌ Sem conexão';
+      statusEl.className = 'db-status db-err';
+    });
+
+    onValue(logRef, snap => renderLog(snap.val()));
+
+    onValue(configRef, snap => {
+      const c = snap.val();
+      if (c && c.autoSync && !syncOn) {
+        syncOn = true;
+        document.getElementById('syncSwitch').classList.add('on');
+        document.getElementById('syncStatus').textContent = 'Ativa ✓';
+        if (c.interval) {
+          document.getElementById('syncInterval').value = c.interval;
+          syncTimer = setInterval(() => window._importar(), c.interval);
+        }
+      }
+    });
+  }
+</script>
+</body>
+</html>
